@@ -1,74 +1,85 @@
 class TabItem {
   constructor(element) {
+    // attach dom element to object. Example in Tabs class
     this.element = element;
   }
 
   select() {
-    this.element.classList.add('Tabs__item-selected');// should use classList
+    // should use classList
+    this.element.classList.add("Tabs__item-selected");
   }
 
   deselect() {
-    this.element.classList.remove('Tabs__item-selected');// should use classList
+    // should use classList
+    this.element.classList.remove("Tabs__item-selected");
   }
 }
 
 class TabLink {
   constructor(element) {
     this.element = element;// attach dom element to object
-    this.tabItem = this.getTab(this.element.dataset.tab);
-    // this.tabs = parent;// attach parent to object
-    // this.tabItem = parent.getTab(this.element.dataset.tab);// assign this to the associated tab using the parent's "getTab" method by passing it the correct data
-    this.tabItem = new TabItem(this.tabItem);// reassign this.tabItem to be a new instance of TabItem, passing it this.tabItem
-    // this.element.addEventListener('click', () => {
-    //   this.tabs.updateActive(this);
-    //   this.select();
-    // });
+    this.element.addEventListener('click', (event) => {
+      //ToDo: fill in event listner
+      event.tabData = this.element.dataset.tab;
+    });
   };
 
   select() {
-    this.element.classList.add('Tabs__link-selected');// select the associated tab
-    this.tabItem.select();
+    // select this link
+    this.element.classList.add("Tabs__link-selected");
   }
 
   deselect() {
-    this.element.classList.remove('Tabs__link-selected');// select this link
-    this.tabItem.deselect();
-  }
-
-  getTab(data) {
-    return this.element.parentNode.parentNode.querySelector(`.Tabs__item[data-tab="${data}"]`);// use the tab item classname and the data attribute to select the proper tab
+    // deselect this link
+    this.element.classList.remove("Tabs__link-selected");
   }
 }
 
 class Tabs {
   constructor(element) {
     this.element = element;// attaches the dom node to the object as "this.element"
-    this.links = element.querySelectorAll(".Tabs__link");
-    this.links = Array.from(this.links).map((link) => {
-      const newLink = new TabLink(link);
-      link.addEventListener('click', () => {
-      // console.log('damn dots');
-        this.updateActive(newLink);
-        newLink.select();
-      });
-      return newLink;
-    });
-    // this.tabItem = new TabItem(this.tabItem);
+    this.activeData = null;
 
-    this.activeLink = this.links[0];
+    this.links = this.element.querySelectorAll(".Tabs__link");
+    this.links = Array.from(this.links).reduce((obj, link) => {
+      obj[link.dataset.tab] = new TabLink(link);
+      return obj;
+    }, {});
+
+    this.items = this.element.querySelectorAll(".Tabs__item");
+    this.items = Array.from(this.items).reduce((obj, item) => {
+      obj[item.dataset.tab] = new TabItem(item);
+      return obj;
+    }, {});
+
+    this.element.addEventListener('click', event => {
+      if (event.tabData !== undefined) {
+        this.updateActive(event.tabData);
+        event.stopPropagation();
+      }
+    });
+
     this.init();
   }
 
   init() {
-    this.activeLink.select();
+    // select the first link and tab upon ititialization
+    this.activeData = this.element.querySelector(".Tabs__link-default");
+    this.activeData = this.activeData.dataset.tab;
+    this.updateActive(this.activeData);
   }
 
-  updateActive(newActive) {
-    this.activeLink.deselect();// deselect the old active link
-    this.activeLink = newActive;// assign the new active link
-  }
+  updateActive(data) {
+    if (this.activeData !== null) {
+      this.links[this.activeData].deselect();
+      this.items[this.activeData].deselect();
+    }
 
+    this.links[data].select();
+    this.items[data].select();
+    this.activeData = data;
+  }
 }
 
-let tabs = document.querySelectorAll(".Tabs");
-tabs = Array.from(tabs).map(tabs => new Tabs(tabs));
+let allTabs = document.querySelectorAll(".Tabs");
+allTabs = Array.from(allTabs).map(tabs => new Tabs(tabs));
